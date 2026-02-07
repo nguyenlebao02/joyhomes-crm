@@ -1,11 +1,24 @@
 import { PrismaClient } from "../src/generated/prisma";
-import { hash } from "crypto";
+import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
+import { scryptSync, randomBytes } from "crypto";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
-// Simple password hash for seed data (use bcrypt in production)
+// Hash password using scrypt (Better Auth compatible format: salt:hash)
 function hashPassword(password: string): string {
-  return hash("sha256", password);
+  const salt = randomBytes(16).toString("hex");
+  const key = scryptSync(password.normalize("NFKC"), salt, 64, {
+    N: 16384,
+    r: 16,
+    p: 1,
+    maxmem: 128 * 16384 * 16 * 2, // Required for Node.js scrypt
+  });
+  return `${salt}:${key.toString("hex")}`;
 }
 
 async function main() {
@@ -30,6 +43,7 @@ async function main() {
   await prisma.property.deleteMany();
   await prisma.project.deleteMany();
   await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
   await prisma.user.deleteMany();
   await prisma.setting.deleteMany();
 
@@ -40,7 +54,6 @@ async function main() {
     data: {
       email: "admin@joyhomes.vn",
       phone: "0901234567",
-      passwordHash: hashPassword("admin123"),
       fullName: "Admin Joyhomes",
       role: "ADMIN",
       department: "Ban Giám Đốc",
@@ -49,11 +62,20 @@ async function main() {
     },
   });
 
+  // Create credential account for admin (Better Auth requires this)
+  await prisma.account.create({
+    data: {
+      userId: admin.id,
+      accountId: admin.id,
+      providerId: "credential",
+      password: hashPassword("admin123"),
+    },
+  });
+
   const manager = await prisma.user.create({
     data: {
       email: "manager@joyhomes.vn",
       phone: "0901234568",
-      passwordHash: hashPassword("manager123"),
       fullName: "Nguyễn Văn Minh",
       role: "MANAGER",
       department: "Kinh Doanh",
@@ -65,11 +87,19 @@ async function main() {
     },
   });
 
+  await prisma.account.create({
+    data: {
+      userId: manager.id,
+      accountId: manager.id,
+      providerId: "credential",
+      password: hashPassword("manager123"),
+    },
+  });
+
   const sales1 = await prisma.user.create({
     data: {
       email: "sales1@joyhomes.vn",
       phone: "0901234569",
-      passwordHash: hashPassword("sales123"),
       fullName: "Trần Thị Hoa",
       role: "SALES",
       department: "Kinh Doanh",
@@ -81,11 +111,19 @@ async function main() {
     },
   });
 
+  await prisma.account.create({
+    data: {
+      userId: sales1.id,
+      accountId: sales1.id,
+      providerId: "credential",
+      password: hashPassword("sales123"),
+    },
+  });
+
   const sales2 = await prisma.user.create({
     data: {
       email: "sales2@joyhomes.vn",
       phone: "0901234570",
-      passwordHash: hashPassword("sales123"),
       fullName: "Lê Văn Nam",
       role: "SALES",
       department: "Kinh Doanh",
@@ -95,17 +133,34 @@ async function main() {
     },
   });
 
+  await prisma.account.create({
+    data: {
+      userId: sales2.id,
+      accountId: sales2.id,
+      providerId: "credential",
+      password: hashPassword("sales123"),
+    },
+  });
+
   const accountant = await prisma.user.create({
     data: {
       email: "ketoan@joyhomes.vn",
       phone: "0901234571",
-      passwordHash: hashPassword("ketoan123"),
       fullName: "Phạm Thị Lan",
       role: "ACCOUNTANT",
       department: "Kế Toán",
       position: "Kế toán trưởng",
       status: "ACTIVE",
       baseSalary: 18000000,
+    },
+  });
+
+  await prisma.account.create({
+    data: {
+      userId: accountant.id,
+      accountId: accountant.id,
+      providerId: "credential",
+      password: hashPassword("ketoan123"),
     },
   });
 

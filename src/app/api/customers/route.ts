@@ -19,17 +19,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(stats);
     }
 
-    // Parse search params
-    const params = customerSearchSchema.safeParse({
-      page: searchParams.get("page"),
-      limit: searchParams.get("limit"),
-      search: searchParams.get("search"),
-      status: searchParams.get("status"),
-      source: searchParams.get("source"),
-      priority: searchParams.get("priority"),
-      sortBy: searchParams.get("sortBy"),
-      sortOrder: searchParams.get("sortOrder"),
-    });
+    // Parse search params - filter out null values so defaults work
+    const rawParams: Record<string, string> = {};
+    const paramKeys = ["page", "limit", "search", "status", "source", "priority", "sortBy", "sortOrder"];
+    for (const key of paramKeys) {
+      const value = searchParams.get(key);
+      if (value !== null && value !== "") {
+        rawParams[key] = value;
+      }
+    }
+    const params = customerSearchSchema.safeParse(rawParams);
 
     if (!params.success) {
       return NextResponse.json({ error: params.error.issues }, { status: 400 });

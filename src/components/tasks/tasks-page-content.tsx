@@ -43,7 +43,7 @@ async function fetchTasks(status?: string) {
 const statusLabels: Record<string, string> = {
   TODO: "Cần làm",
   IN_PROGRESS: "Đang làm",
-  DONE: "Hoàn thành",
+  COMPLETED: "Hoàn thành",
   CANCELLED: "Đã hủy",
 };
 
@@ -87,7 +87,7 @@ export function TasksPageContent() {
   });
 
   const toggleDone = (task: Task) => {
-    const newStatus = task.status === "DONE" ? "TODO" : "DONE";
+    const newStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
     updateMutation.mutate({ id: task.id, status: newStatus });
   };
 
@@ -98,7 +98,7 @@ export function TasksPageContent() {
 
   const todoTasks = tasks?.filter((t) => t.status === "TODO") || [];
   const inProgressTasks = tasks?.filter((t) => t.status === "IN_PROGRESS") || [];
-  const doneTasks = tasks?.filter((t) => t.status === "DONE") || [];
+  const doneTasks = tasks?.filter((t) => t.status === "COMPLETED") || [];
 
   return (
     <div className="space-y-6">
@@ -126,7 +126,7 @@ export function TasksPageContent() {
             <SelectItem value="all">Tất cả</SelectItem>
             <SelectItem value="TODO">Cần làm</SelectItem>
             <SelectItem value="IN_PROGRESS">Đang làm</SelectItem>
-            <SelectItem value="DONE">Hoàn thành</SelectItem>
+            <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -207,10 +207,10 @@ function TaskCard({
   isOverdue: (date?: string) => boolean;
 }) {
   return (
-    <Card className={task.status === "DONE" ? "opacity-60" : ""}>
+    <Card className={task.status === "COMPLETED" ? "opacity-60" : ""}>
       <CardContent className="flex items-center gap-4 p-4">
         <Checkbox
-          checked={task.status === "DONE"}
+          checked={task.status === "COMPLETED"}
           onCheckedChange={() => onToggle(task)}
         />
         <div className="flex-1">
@@ -226,7 +226,7 @@ function TaskCard({
             {task.assignee && <span>👤 {task.assignee.name}</span>}
             {task.customer && <span>🏠 {task.customer.name}</span>}
             {task.dueDate && (
-              <span className={isOverdue(task.dueDate) && task.status !== "DONE" ? "text-red-500" : ""}>
+              <span className={isOverdue(task.dueDate) && task.status !== "COMPLETED" ? "text-red-500" : ""}>
                 📅 {format(new Date(task.dueDate), "dd/MM/yyyy", { locale: vi })}
               </span>
             )}

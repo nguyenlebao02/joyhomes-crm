@@ -99,7 +99,7 @@ export function DashboardSidebarNavigation() {
       <SidebarFooter className="border-t p-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarImage src="/avatar.png" />
+            <AvatarImage src="/avatar.svg" />
             <AvatarFallback>
               <UserCircle className="h-5 w-5" />
             </AvatarFallback>
