@@ -1,0 +1,609 @@
+// Joyhomes CRM Database Schema
+// Version: 1.0.0
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== USER & AUTH ====================
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  phone         String?    @unique
+  passwordHash  String?
+  fullName      String
+  avatar        String?
+  role          UserRole   @default(SALES)
+  department    String?
+  position      String?
+  status        UserStatus @default(ACTIVE)
+
+  // Salary info
+  baseSalary  Decimal? @db.Decimal(15, 2)
+  bankAccount String?
+  bankName    String?
+
+  // Relations
+  customers      Customer[]
+  bookings       Booking[]
+  tasks          Task[]                    @relation("CreatedTasks")
+  assignedTasks  Task[]                    @relation("AssignedTasks")
+  messages       Message[]
+  notifications  Notification[]
+  eventAttendees EventAttendee[]
+  activityLogs   ActivityLog[]
+  conversations  ConversationParticipant[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  SALES
+  ACCOUNTANT
+  MARKETING
+  SUPPORT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ==================== CUSTOMER (CRM) ====================
+
+model Customer {
+  id          String         @id @default(uuid())
+  code        String         @unique // MA_KH_001
+  fullName    String
+  phone       String
+  email       String?
+  address     String?
+  dateOfBirth DateTime?
+  gender      Gender?
+  occupation  String?
+  income      String?
+  source      LeadSource     @default(OTHER)
+  status      CustomerStatus @default(NEW)
+  priority    Priority       @default(MEDIUM)
+
+  // Owner
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Relations
+  contacts  CustomerContact[]
+  notes     CustomerNote[]
+  reminders Reminder[]
+  bookings  Booking[]
+  interests CustomerInterest[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([source])
+  @@index([phone])
+  @@map("customers")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum LeadSource {
+  FACEBOOK
+  GOOGLE
+  ZALO
+  REFERRAL
+  WALK_IN
+  EVENT
+  HOTLINE
+  WEBSITE
+  OTHER
+}
+
+enum CustomerStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  NEGOTIATING
+  WON
+  LOST
+  DORMANT
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model CustomerContact {
+  id         String      @id @default(uuid())
+  customerId String
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type       ContactType
+  content    String
+  result     String?
+  nextAction String?
+  createdAt  DateTime    @default(now())
+  createdBy  String
+
+  @@index([customerId])
+  @@map("customer_contacts")
+}
+
+enum ContactType {
+  CALL
+  SMS
+  EMAIL
+  ZALO
+  FACEBOOK
+  MEETING
+  SITE_VISIT
+}
+
+model CustomerNote {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  content    String
+  createdAt  DateTime @default(now())
+  createdBy  String
+
+  @@index([customerId])
+  @@map("customer_notes")
+}
+
+model Reminder {
+  id          String    @id @default(uuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  remindAt    DateTime
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([customerId])
+  @@index([remindAt])
+  @@map("reminders")
+}
+
+model CustomerInterest {
+  id           String   @id @default(uuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id])
+  propertyType String?
+  budget       String?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  @@index([customerId])
+  @@index([projectId])
+  @@map("customer_interests")
+}
+
+// ==================== INVENTORY (BANG HANG) ====================
+
+model Project {
+  id             String        @id @default(uuid())
+  code           String        @unique
+  name           String
+  developer      String
+  location       String
+  address        String?
+  district       String?
+  city           String?
+  description    String?
+  totalUnits     Int           @default(0)
+  availableUnits Int           @default(0)
+  thumbnail      String?
+  images         String[]
+  floorPlan360   String?
+  documents      String[]
+  status         ProjectStatus @default(UPCOMING)
+  launchDate     DateTime?
+  completionDate DateTime?
+  commissionRate Decimal?      @db.Decimal(5, 2)
+
+  // Relations
+  properties Property[]
+  interests  CustomerInterest[]
+  bookings   Booking[]
+  events     Event[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([status])
+  @@index([city])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  UPCOMING
+  OPEN
+  SOLD_OUT
+  COMPLETED
+}
+
+model Property {
+  id           String         @id @default(uuid())
+  code         String         @unique
+  projectId    String
+  project      Project        @relation(fields: [projectId], references: [id])
+  building     String?
+  floor        Int?
+  unit         String?
+  propertyType PropertyType
+  area         Decimal        @db.Decimal(10, 2)
+  bedrooms     Int?
+  bathrooms    Int?
+  direction    String?
+  view         String?
+  price        Decimal        @db.Decimal(15, 2)
+  pricePerSqm  Decimal?       @db.Decimal(15, 2)
+  status       PropertyStatus @default(AVAILABLE)
+  floorPlan    String?
+  images       String[]
+
+  // Relations
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@index([propertyType])
+  @@map("properties")
+}
+
+enum PropertyType {
+  APARTMENT
+  VILLA
+  TOWNHOUSE
+  SHOPHOUSE
+  LAND
+  OFFICE
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  HOLD
+  BOOKED
+  SOLD
+  UNAVAILABLE
+}
+
+// ==================== SALES & BOOKING ====================
+
+model Booking {
+  id               String        @id @default(uuid())
+  code             String        @unique
+  customerId       String
+  customer         Customer      @relation(fields: [customerId], references: [id])
+  propertyId       String
+  property         Property      @relation(fields: [propertyId], references: [id])
+  projectId        String
+  project          Project       @relation(fields: [projectId], references: [id])
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  status           BookingStatus @default(PENDING)
+  bookingDate      DateTime      @default(now())
+  agreedPrice      Decimal       @db.Decimal(15, 2)
+  depositAmount    Decimal       @db.Decimal(15, 2)
+  depositDate      DateTime?
+  contractNumber   String?
+  contractDate     DateTime?
+  commissionRate   Decimal?      @db.Decimal(5, 2)
+  commissionAmount Decimal?      @db.Decimal(15, 2)
+  notes            String?
+
+  // Relations
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([propertyId])
+  @@index([userId])
+  @@index([status])
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  DEPOSITED
+  CONTRACTED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+model Transaction {
+  id              String            @id @default(uuid())
+  code            String            @unique
+  bookingId       String
+  booking         Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  type            TransactionType
+  amount          Decimal           @db.Decimal(15, 2)
+  paymentMethod   PaymentMethod?
+  paymentDate     DateTime?
+  status          TransactionStatus @default(PENDING)
+  referenceNumber String?
+  bankAccount     String?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  createdBy       String
+
+  @@index([bookingId])
+  @@index([type])
+  @@index([status])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DEPOSIT
+  PAYMENT
+  REFUND
+  COMMISSION
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+// ==================== CHAT ====================
+
+model Conversation {
+  id           String                    @id @default(uuid())
+  type         ConversationType          @default(DIRECT)
+  name         String?
+  participants ConversationParticipant[]
+  messages     Message[]
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  @@map("conversations")
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String      @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User        @relation(fields: [senderId], references: [id])
+  content        String
+  type           MessageType @default(TEXT)
+  attachments    String[]
+  isRead         Boolean     @default(false)
+  readAt         DateTime?
+  createdAt      DateTime    @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  PROPERTY_SHARE
+}
+
+// ==================== TASK & EVENT ====================
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  creatorId   String
+  creator     User       @relation("CreatedTasks", fields: [creatorId], references: [id])
+  assigneeId  String?
+  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  dueDate     DateTime?
+  priority    Priority   @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  customerId  String?
+  bookingId   String?
+  completedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([creatorId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Event {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  type        EventType
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  projectId   String?
+  project     Project?      @relation(fields: [projectId], references: [id])
+  status      EventStatus   @default(UPCOMING)
+  attendees   EventAttendee[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   String
+
+  @@index([startDate])
+  @@index([type])
+  @@map("events")
+}
+
+enum EventType {
+  KICKOFF
+  GROUNDBREAKING
+  OPENING
+  TALK_SHOW
+  TRAINING
+  MEETING
+  OTHER
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+model EventAttendee {
+  id          String    @id @default(uuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  role        String?
+  checkedIn   Boolean   @default(false)
+  checkedInAt DateTime?
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@map("event_attendees")
+}
+
+// ==================== SYSTEM ====================
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  content    String
+  type       NotificationType
+  isRead     Boolean          @default(false)
+  readAt     DateTime?
+  entityType String?
+  entityId   String?
+  createdAt  DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TASK
+  REMINDER
+  BOOKING
+  MESSAGE
+  SYSTEM
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  oldData    Json?
+  newData    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+  type  String @default("string")
+
+  @@index([key])
+  @@map("settings")
+}

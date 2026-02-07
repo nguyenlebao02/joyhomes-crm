@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Joyhomes CRM
+
+Hệ thống CRM quản lý khách hàng, bảng hàng và booking cho Joyhomes Real Estate.
+
+## Tech Stack
+
+- **Frontend:** Next.js 14+ (App Router), TypeScript, Tailwind CSS
+- **UI Components:** shadcn/ui
+- **Database:** PostgreSQL + Prisma ORM
+- **State Management:** TanStack Query + Zustand
+- **Auth:** Better Auth
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env.local
+
+# Update DATABASE_URL in .env.local with your PostgreSQL connection string
+
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma migrate dev
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth routes (login, register)
+│   ├── (dashboard)/       # Protected dashboard routes
+│   └── api/               # API routes
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   ├── forms/             # Form components
+│   ├── tables/            # Data tables
+│   └── layouts/           # Layout components
+├── lib/                   # Utilities and configurations
+├── hooks/                 # Custom React hooks
+├── stores/                # Zustand stores
+├── providers/             # React context providers
+└── types/                 # TypeScript types
+```
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- **CRM:** Quản lý khách hàng, lịch sử liên hệ, nhắc lịch
+- **Bảng hàng:** Quản lý sản phẩm BĐS, trạng thái, mặt bằng 360°
+- **Booking:** Đặt chỗ, đặt cọc, hoa hồng
+- **Chat:** Liên lạc real-time giữa sales và nguồn hàng
+- **Báo cáo:** Dashboard tổng hợp, export Excel/PDF
+- **Task Management:** Giao việc, deadline, nhắc việc
+- **Sự kiện:** Quản lý event, điểm danh
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run ESLint
+```
