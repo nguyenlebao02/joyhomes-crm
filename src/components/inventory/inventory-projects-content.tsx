@@ -1,21 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import Link from "next/link";
-import { Plus, Building2, MapPin, Search } from "lucide-react";
+import { Plus, Building2, MapPin, Search, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-
-async function fetchProjects(search?: string) {
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  const res = await fetch(`/api/inventory/projects?${params.toString()}`);
-  if (!res.ok) throw new Error("Failed to fetch projects");
-  return res.json();
-}
+import { useProjects, useDeleteProject } from "@/hooks/use-inventory-queries";
+import { DeleteConfirmationDialog } from "@/components/inventory/delete-confirmation-dialog";
 
 const statusColors: Record<string, string> = {
   UPCOMING: "bg-blue-100 text-blue-800",
@@ -31,21 +24,46 @@ const statusLabels: Record<string, string> = {
   COMPLETED: "Hoàn thành",
 };
 
+interface Project {
+  id: string;
+  code: string;
+  name: string;
+  location: string;
+  status: string;
+  totalUnits: number;
+  availableUnits: number;
+  _count?: { properties: number; bookings: number };
+}
+
 export function InventoryProjectsContent() {
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
-  const { data: projects, isLoading } = useQuery({
-    queryKey: ["projects", search],
-    queryFn: () => fetchProjects(search),
-  });
+  const { data: projects, isLoading } = useProjects(search) as {
+    data: Project[] | undefined;
+    isLoading: boolean;
+  };
+  const deleteMutation = useDeleteProject();
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
+    });
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Bảng hàng</h1>
-          <p className="text-muted-foreground">Quản lý dự án và sản phẩm bất động sản</p>
+      {/* Search + Add */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm dự án..."
+            className="pl-8"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <Link href="/inventory/projects/new">
           <Button>
@@ -53,17 +71,6 @@ export function InventoryProjectsContent() {
             Thêm dự án
           </Button>
         </Link>
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Tìm dự án..."
-          className="pl-8"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
       </div>
 
       {/* Projects Grid */}
@@ -85,18 +92,24 @@ export function InventoryProjectsContent() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {projects?.map((project: {
-            id: string;
-            code: string;
-            name: string;
-            location: string;
-            status: string;
-            totalUnits: number;
-            availableUnits: number;
-            _count?: { properties: number; bookings: number };
-          }) => (
-            <Link key={project.id} href={`/inventory/projects/${project.id}`}>
-              <Card className="h-full cursor-pointer transition-shadow hover:shadow-md">
+          {projects?.map((project) => (
+            <Card key={project.id} className="group relative h-full transition-shadow hover:shadow-md">
+              {/* Action buttons */}
+              <div className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Link href={`/inventory/projects/${project.id}/edit`} onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
+                  onClick={(e) => { e.preventDefault(); setDeleteTarget(project); }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              <Link href={`/inventory/projects/${project.id}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div>
@@ -124,11 +137,21 @@ export function InventoryProjectsContent() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            </Link>
+              </Link>
+            </Card>
           ))}
         </div>
       )}
+
+      {/* Delete confirmation */}
+      <DeleteConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Xoá dự án"
+        description={`Bạn có chắc muốn xoá dự án "${deleteTarget?.name}"? Thao tác này không thể hoàn tác.`}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

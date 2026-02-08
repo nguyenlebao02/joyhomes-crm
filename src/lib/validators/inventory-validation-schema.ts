@@ -56,6 +56,7 @@ export const propertySearchSchema = z.object({
   status: z.string().optional(),
   propertyType: z.string().optional(),
   building: z.string().optional(),
+  direction: z.string().optional(),
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
   minArea: z.coerce.number().optional(),

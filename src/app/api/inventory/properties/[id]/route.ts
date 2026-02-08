@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getPropertyById, updateProperty, updatePropertyStatus } from "@/services/inventory-service";
+import { getPropertyById, updateProperty, updatePropertyStatus, deleteProperty } from "@/services/inventory-service";
 import { propertyUpdateSchema } from "@/lib/validators/inventory-validation-schema";
 
 // GET /api/inventory/properties/[id]
@@ -63,6 +63,31 @@ export async function PATCH(
     return NextResponse.json(property);
   } catch (error) {
     console.error("PATCH /api/inventory/properties/[id] error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+// DELETE /api/inventory/properties/[id]
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = session.user.role as string;
+    if (role !== "ADMIN" && role !== "MANAGER") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id } = await params;
+    await deleteProperty(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/inventory/properties/[id] error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

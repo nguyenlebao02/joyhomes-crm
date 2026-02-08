@@ -72,7 +72,7 @@ export async function DELETE(
     }
 
     const role = session.user.role as string;
-    if (role !== "ADMIN") {
+    if (role !== "ADMIN" && role !== "MANAGER") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

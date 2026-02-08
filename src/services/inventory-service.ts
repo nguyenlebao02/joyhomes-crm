@@ -67,7 +67,7 @@ export async function getProjectStats() {
 // ==================== PROPERTY SERVICES ====================
 
 export async function getProperties(params: PropertySearchParams) {
-  const { page, limit, projectId, status, propertyType, building, minPrice, maxPrice, minArea, maxArea, bedrooms, search } = params;
+  const { page, limit, projectId, status, propertyType, building, direction, minPrice, maxPrice, minArea, maxArea, bedrooms, search } = params;
 
   const where: Prisma.PropertyWhereInput = {};
 
@@ -76,6 +76,7 @@ export async function getProperties(params: PropertySearchParams) {
   if (propertyType) where.propertyType = propertyType as Prisma.EnumPropertyTypeFilter;
   if (building) where.building = building;
   if (bedrooms) where.bedrooms = bedrooms;
+  if (direction) where.direction = { in: direction.split(",") };
 
   if (minPrice || maxPrice) {
     where.price = {};
@@ -181,6 +182,22 @@ async function updateProjectUnitCounts(projectId: string) {
     where: { id: projectId },
     data: { totalUnits, availableUnits },
   });
+}
+
+export async function deleteProperty(id: string) {
+  const property = await db.property.delete({ where: { id } });
+  await updateProjectUnitCounts(property.projectId);
+  return property;
+}
+
+export async function bulkCreateProperties(data: PropertyCreateInput[]) {
+  const result = await db.property.createMany({ data });
+
+  // Update project unit counts for all affected projects
+  const projectIds = [...new Set(data.map((d) => d.projectId))];
+  await Promise.all(projectIds.map(updateProjectUnitCounts));
+
+  return result;
 }
 
 export async function getPropertyStats(projectId?: string) {

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       status: searchParams.get("status"),
       propertyType: searchParams.get("propertyType"),
       building: searchParams.get("building"),
+      direction: searchParams.get("direction"),
       minPrice: searchParams.get("minPrice"),
       maxPrice: searchParams.get("maxPrice"),
       minArea: searchParams.get("minArea"),
