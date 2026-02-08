@@ -16,6 +16,7 @@ Full-stack CRM system for Joyhomes real estate company covering:
 | Layer | Technology |
 |-------|------------|
 | Frontend | Next.js 16 (App Router), TypeScript, Tailwind CSS, shadcn/ui |
+| Design | Teal palette (Minimalism & Swiss Style), Inter + Cinzel fonts |
 | Backend | Next.js API Routes |
 | Database | PostgreSQL (Supabase) + Prisma ORM |
 | Auth | Better Auth |
@@ -68,6 +69,7 @@ joyhomes-crm/
 - [x] Phase 10: AI & Automation
 
 ### Recent Updates (2026-02-08)
+- **Design system rebrand**: Navy → Teal palette (Minimalism & Swiss Style), Cinzel brand font, 200ms transitions
 - Security hardening: 16 vulnerabilities fixed (IDOR, CSRF, rate limiting, file upload)
 - Code quality: ownership checks, role-scoped queries, permission helpers
 - Inventory management: property CRUD, filtering, bulk import, project CRUD

@@ -2,6 +2,19 @@
 
 ## [2026-02-08] - Security, Quality & UI Enhancement
 
+### Design System Rebrand — `9277969`
+- **Color palette**: Navy (hue 260) → Teal (hue 185) across all CSS variables
+- **Design tokens**: Primary `#0F766E` (teal-700), Secondary `#14B8A6` (teal-500), CTA `#0369A1` (sky-700)
+- **Font**: Added Cinzel for brand name ("Joyhomes CRM"), Inter remains body font
+- **Sidebar**: Dark teal (`oklch(0.22 0.04 185)`) replacing dark navy
+- **Auth pages**: Teal gradient background (`from-teal-50 to-teal-100`)
+- **Charts**: Revenue/booking/customer-source charts updated to teal palette
+- **KPI cards**: Conversion rate accent changed violet → sky-600
+- **Transitions**: 200ms `transition-colors` on all interactive elements
+- **Font var fix**: `--font-geist-sans` → `--font-inter` (corrected mismatch)
+- **Hydration fix**: Dashboard greeting/date moved to `useEffect` to prevent SSR mismatch (`39f1a6f`)
+- Files: `globals.css`, `layout.tsx`, `(auth)/layout.tsx`, `login-form-component.tsx`, 5 dashboard components
+
 ### Security Fixes (16 issues)
 - **Critical IDOR vulnerabilities**: API routes hardened with ownership checks (`9904be6`)
 - **File upload security**: Validate MIME types, file size limits, sanitize filenames
