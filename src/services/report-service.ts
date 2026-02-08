@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma";
 import {
   startOfMonth,
   endOfMonth,
@@ -10,12 +11,20 @@ import {
 
 // Dashboard overview stats with trends
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function getDashboardStats(dateRange?: { start: Date; end: Date }) {
+export async function getDashboardStats(dateRange?: { start: Date; end: Date }, userId?: string, role?: string) {
   const now = new Date();
   const currentMonthStart = startOfMonth(now);
   const currentMonthEnd = endOfMonth(now);
   const lastMonthStart = startOfMonth(subMonths(now, 1));
   const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+  // Scope data for SALES role to their own records
+  const customerWhere: Prisma.CustomerWhereInput = {};
+  const bookingWhere: Prisma.BookingWhereInput = {};
+  if (role === "SALES" && userId) {
+    customerWhere.userId = userId;
+    bookingWhere.userId = userId;
+  }
 
   const [
     totalCustomers,
@@ -36,24 +45,25 @@ export async function getDashboardStats(dateRange?: { start: Date; end: Date }) 
     lastMonthBookings,
     lastMonthRevenue,
   ] = await Promise.all([
-    db.customer.count(),
+    db.customer.count({ where: customerWhere }),
     db.project.count(),
-    db.booking.count(),
+    db.booking.count({ where: bookingWhere }),
     db.booking.count({
-      where: { status: { in: ["PENDING", "APPROVED", "DEPOSITED", "CONTRACTED"] } },
+      where: { ...bookingWhere, status: { in: ["PENDING", "APPROVED", "DEPOSITED", "CONTRACTED"] } },
     }),
-    db.booking.count({ where: { status: "PENDING" } }),
-    db.booking.count({ where: { status: "COMPLETED" } }),
+    db.booking.count({ where: { ...bookingWhere, status: "PENDING" } }),
+    db.booking.count({ where: { ...bookingWhere, status: "COMPLETED" } }),
     db.booking.aggregate({
-      where: { status: "COMPLETED" },
+      where: { ...bookingWhere, status: "COMPLETED" },
       _sum: { agreedPrice: true },
     }),
     db.booking.aggregate({
-      where: { status: "COMPLETED" },
+      where: { ...bookingWhere, status: "COMPLETED" },
       _sum: { commissionAmount: true },
     }),
     db.booking.findMany({
       take: 5,
+      where: bookingWhere,
       orderBy: { createdAt: "desc" },
       include: {
         customer: { select: { fullName: true } },
@@ -62,15 +72,16 @@ export async function getDashboardStats(dateRange?: { start: Date; end: Date }) 
     }),
     // Current month customers
     db.customer.count({
-      where: { createdAt: { gte: currentMonthStart, lte: currentMonthEnd } },
+      where: { ...customerWhere, createdAt: { gte: currentMonthStart, lte: currentMonthEnd } },
     }),
     // Current month bookings
     db.booking.count({
-      where: { createdAt: { gte: currentMonthStart, lte: currentMonthEnd } },
+      where: { ...bookingWhere, createdAt: { gte: currentMonthStart, lte: currentMonthEnd } },
     }),
     // Current month revenue
     db.booking.aggregate({
       where: {
+        ...bookingWhere,
         status: "COMPLETED",
         createdAt: { gte: currentMonthStart, lte: currentMonthEnd },
       },
@@ -78,15 +89,16 @@ export async function getDashboardStats(dateRange?: { start: Date; end: Date }) 
     }),
     // Last month customers
     db.customer.count({
-      where: { createdAt: { gte: lastMonthStart, lte: lastMonthEnd } },
+      where: { ...customerWhere, createdAt: { gte: lastMonthStart, lte: lastMonthEnd } },
     }),
     // Last month bookings
     db.booking.count({
-      where: { createdAt: { gte: lastMonthStart, lte: lastMonthEnd } },
+      where: { ...bookingWhere, createdAt: { gte: lastMonthStart, lte: lastMonthEnd } },
     }),
     // Last month revenue
     db.booking.aggregate({
       where: {
+        ...bookingWhere,
         status: "COMPLETED",
         createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
       },

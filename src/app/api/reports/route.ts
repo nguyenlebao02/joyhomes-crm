@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     switch (type) {
       case "dashboard":
-        const dashboardStats = await getDashboardStats();
+        const dashboardStats = await getDashboardStats(undefined, session.user.id, role);
         return NextResponse.json(dashboardStats);
 
       case "monthly-revenue":

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { hasPermission, isElevatedRole } from "@/lib/auth-permissions";
+import { UserRole } from "@/generated/prisma";
 import { getTaskById, updateTask, deleteTask } from "@/services/task-service";
 import { taskUpdateSchema } from "@/lib/validators/task-event-validation-schema";
 
@@ -47,6 +49,19 @@ export async function PATCH(
       return NextResponse.json({ error: validated.error.issues }, { status: 400 });
     }
 
+    const role = session.user.role as UserRole;
+    if (!hasPermission(role, "tasks:write")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Non-elevated roles can only update tasks they created or are assigned to
+    if (!isElevatedRole(role)) {
+      const task = await getTaskById(id);
+      if (!task || (task.creatorId !== session.user.id && task.assigneeId !== session.user.id)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const task = await updateTask(id, validated.data);
     return NextResponse.json(task);
   } catch (error) {
@@ -66,8 +81,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const role = session.user.role as string;
-    if (role !== "ADMIN" && role !== "MANAGER") {
+    const role = session.user.role as UserRole;
+    if (!isElevatedRole(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

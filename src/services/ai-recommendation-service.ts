@@ -413,7 +413,8 @@ export async function getCrossSellSuggestions(customerId: string): Promise<Cross
 }
 
 /**
- * Get customers needing attention (no contact in X days)
+ * Get customers needing attention (no contact in X days).
+ * Filters at DB level to avoid loading all customers into memory.
  */
 export async function getCustomersNeedingAttention(
   userId: string,
@@ -421,9 +422,16 @@ export async function getCustomersNeedingAttention(
   daysThreshold = 7,
   limit = 20
 ): Promise<Array<{ customer: { id: string; fullName: string; phone: string; status: string }; daysSinceContact: number; reason: string }>> {
+  const thresholdDate = new Date(Date.now() - daysThreshold * 24 * 60 * 60 * 1000);
+
   const where: Prisma.CustomerWhereInput = {
     deletedAt: null,
     status: { notIn: ["WON", "LOST"] },
+    // Only customers with no contacts OR last contact older than threshold
+    OR: [
+      { contacts: { none: {} } },
+      { contacts: { every: { createdAt: { lt: thresholdDate } } } },
+    ],
   };
 
   if (role === "SALES") {
@@ -432,40 +440,28 @@ export async function getCustomersNeedingAttention(
 
   const customers = await db.customer.findMany({
     where,
-    include: {
-      contacts: { orderBy: { createdAt: "desc" }, take: 1 },
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      status: true,
+      createdAt: true,
+      contacts: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
     },
+    take: limit,
+    orderBy: { createdAt: "asc" },
   });
 
-  const needAttention = customers
-    .map((c) => {
-      const lastContact = c.contacts[0];
-      const lastContactDate = lastContact ? new Date(lastContact.createdAt) : new Date(c.createdAt);
-      const daysSinceContact = Math.floor((Date.now() - lastContactDate.getTime()) / (1000 * 60 * 60 * 24));
+  return customers.map((c) => {
+    const lastContactDate = c.contacts[0] ? new Date(c.contacts[0].createdAt) : new Date(c.createdAt);
+    const daysSinceContact = Math.floor((Date.now() - lastContactDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      let reason = "";
-      if (!lastContact) {
-        reason = "Chưa có lịch sử liên hệ";
-      } else if (daysSinceContact > daysThreshold) {
-        reason = `Không liên hệ ${daysSinceContact} ngày`;
-      }
-
-      return {
-        customer: {
-          id: c.id,
-          fullName: c.fullName,
-          phone: c.phone,
-          status: c.status,
-        },
-        daysSinceContact,
-        reason,
-      };
-    })
-    .filter((c) => c.daysSinceContact > daysThreshold)
-    .sort((a, b) => b.daysSinceContact - a.daysSinceContact)
-    .slice(0, limit);
-
-  return needAttention;
+    return {
+      customer: { id: c.id, fullName: c.fullName, phone: c.phone, status: c.status },
+      daysSinceContact,
+      reason: !c.contacts[0] ? "Chưa có lịch sử liên hệ" : `Không liên hệ ${daysSinceContact} ngày`,
+    };
+  }).sort((a, b) => b.daysSinceContact - a.daysSinceContact);
 }
 
 // Helper function to parse budget string to number
