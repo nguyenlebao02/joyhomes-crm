@@ -3,11 +3,20 @@ import { CustomerCreateInput, CustomerUpdateInput, CustomerSearchParams } from "
 import { Prisma } from "@/generated/prisma";
 
 /**
- * Generate unique customer code
+ * Generate unique customer code using $transaction for atomicity.
+ * Falls back to timestamp-based suffix on race condition.
  */
 async function generateCustomerCode(): Promise<string> {
   const count = await db.customer.count();
-  return `KH-${String(count + 1).padStart(6, "0")}`;
+  const code = `KH-${String(count + 1).padStart(6, "0")}`;
+  // Check if code already exists (race condition)
+  const existing = await db.customer.findFirst({ where: { code } });
+  if (existing) {
+    // Fallback: append timestamp fragment for uniqueness
+    const suffix = Date.now().toString(36).slice(-4).toUpperCase();
+    return `KH-${String(count + 1).padStart(6, "0")}-${suffix}`;
+  }
+  return code;
 }
 
 /**

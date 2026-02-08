@@ -66,7 +66,7 @@ export const customerSearchSchema = z.object({
   status: z.string().optional(),
   source: z.string().optional(),
   priority: z.string().optional(),
-  sortBy: z.string().default("createdAt"),
+  sortBy: z.enum(["createdAt", "updatedAt", "fullName", "phone", "email", "status", "source", "priority"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 

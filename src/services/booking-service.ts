@@ -2,19 +2,21 @@ import { db } from "@/lib/db";
 import type { BookingStatus } from "@/generated/prisma";
 import type { BookingCreateInput, BookingUpdateInput } from "@/lib/validators/booking-validation-schema";
 
-// Generate booking code: BK-YYYYMMDD-XXXX
+import crypto from "crypto";
+
+// Generate booking code: BK-YYYYMMDD-XXXX (cryptographically random)
 function generateBookingCode(): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const random = crypto.randomBytes(3).toString("hex").toUpperCase().slice(0, 4);
   return `BK-${dateStr}-${random}`;
 }
 
-// Generate transaction code: TXN-YYYYMMDD-XXXX
+// Generate transaction code: TXN-YYYYMMDD-XXXX (cryptographically random)
 function generateTransactionCode(): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const random = crypto.randomBytes(3).toString("hex").toUpperCase().slice(0, 4);
   return `TXN-${dateStr}-${random}`;
 }
 

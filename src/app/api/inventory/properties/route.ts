@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getProperties, createProperty, getPropertyStats, bulkUpdatePropertyStatus } from "@/services/inventory-service";
 import { propertyCreateSchema, propertySearchSchema } from "@/lib/validators/inventory-validation-schema";
+import { z } from "zod";
+
+const PropertyStatusEnum = z.enum(["AVAILABLE", "HOLD", "BOOKED", "SOLD", "UNAVAILABLE"]);
+const bulkStatusUpdateSchema = z.object({
+  action: z.literal("bulk_status_update"),
+  ids: z.array(z.string().uuid()).min(1),
+  status: PropertyStatusEnum,
+});
 
 // GET /api/inventory/properties - List properties
 export async function GET(request: NextRequest) {
@@ -62,11 +70,11 @@ export async function POST(request: NextRequest) {
 
     // Bulk status update
     if (body.action === "bulk_status_update") {
-      const { ids, status } = body;
-      if (!ids || !Array.isArray(ids) || !status) {
-        return NextResponse.json({ error: "Invalid bulk update params" }, { status: 400 });
+      const validated = bulkStatusUpdateSchema.safeParse(body);
+      if (!validated.success) {
+        return NextResponse.json({ error: validated.error.issues }, { status: 400 });
       }
-      const result = await bulkUpdatePropertyStatus(ids, status);
+      const result = await bulkUpdatePropertyStatus(validated.data.ids, validated.data.status);
       return NextResponse.json(result);
     }
 
