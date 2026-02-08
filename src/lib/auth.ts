@@ -9,7 +9,8 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    // Internal CRM: accounts created by admin, no public signup — email verification unnecessary
+    requireEmailVerification: false,
   },
   session: {
     expiresIn: 60 * 60 * 24, // 24 hours
