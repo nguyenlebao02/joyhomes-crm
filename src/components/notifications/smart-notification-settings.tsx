@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Settings, Loader2, RefreshCw, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -77,11 +77,10 @@ export function SmartNotificationSettings() {
     queryFn: fetchSettings,
   });
 
-  useEffect(() => {
-    if (settings) {
-      setLocalSettings(settings);
-    }
-  }, [settings]);
+  // Sync query data to local state without causing cascading renders
+  if (settings && localSettings === null) {
+    setLocalSettings(settings);
+  }
 
   const { data: notificationsData, isLoading: loadingNotifications, refetch } = useQuery({
     queryKey: ["auto-notifications"],
@@ -285,7 +284,7 @@ export function SmartNotificationSettings() {
             </div>
           ) : (
             <p className="text-center text-muted-foreground py-8">
-              Nhấn "Tạo thông báo" để xem trước các thông báo tự động
+              Nhấn &quot;Tạo thông báo&quot; để xem trước các thông báo tự động
             </p>
           )}
         </CardContent>

@@ -69,7 +69,6 @@ export default function NewBookingPage() {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<BookingCreateInput>({
     resolver: zodResolver(bookingCreateSchema) as never,

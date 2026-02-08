@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { BookingStatus, TransactionType, PaymentMethod } from "@/generated/prisma";
+import type { BookingStatus } from "@/generated/prisma";
 import type { BookingCreateInput, BookingUpdateInput } from "@/lib/validators/booking-validation-schema";
 
 // Generate booking code: BK-YYYYMMDD-XXXX

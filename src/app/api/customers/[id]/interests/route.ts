@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { customerInterestSchema } from "@/lib/validators/customer-validation-schema";
+import { verifyCustomerAccess } from "@/services/customer-service";
 
 // GET /api/customers/[id]/interests - Get customer interests
 export async function GET(
@@ -15,6 +16,13 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const interests = await db.customerInterest.findMany({
       where: { customerId: id },
       include: {
@@ -42,6 +50,13 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const validated = customerInterestSchema.safeParse({ ...body, customerId: id });
 
@@ -89,11 +104,27 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const interestId = searchParams.get("interestId");
 
     if (!interestId) {
       return NextResponse.json({ error: "Interest ID required" }, { status: 400 });
+    }
+
+    // Verify interest belongs to this customer (prevents IDOR)
+    const existing = await db.customerInterest.findFirst({
+      where: { id: interestId, customerId: id },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Interest not found" }, { status: 404 });
     }
 
     await db.customerInterest.delete({

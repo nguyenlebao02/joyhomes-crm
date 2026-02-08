@@ -36,8 +36,11 @@ interface BookingStatusTimelineProps {
 
 export function BookingStatusTimeline({
   currentStatus,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   bookingDate,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   depositDate,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   contractDate,
 }: BookingStatusTimelineProps) {
   const currentIndex = STATUS_ORDER[currentStatus] ?? -1;

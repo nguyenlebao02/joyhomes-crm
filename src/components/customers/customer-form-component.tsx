@@ -74,7 +74,7 @@ export function CustomerFormComponent({ defaultValues, customerId, mode }: Custo
     watch,
     formState: { errors },
   } = useForm<CustomerCreateInput>({
-    resolver: zodResolver(customerCreateSchema) as any,
+    resolver: zodResolver(customerCreateSchema) as never,
     defaultValues: {
       source: "OTHER",
       status: "NEW",

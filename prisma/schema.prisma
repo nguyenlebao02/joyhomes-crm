@@ -30,6 +30,8 @@ model User {
   bankName    String?
 
   // Relations
+  sessions       Session[]
+  accounts       Account[]
   customers      Customer[]
   bookings       Booking[]
   tasks          Task[]                    @relation("CreatedTasks")
@@ -53,6 +55,7 @@ model User {
 model Session {
   id        String   @id @default(uuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String   @unique
   expiresAt DateTime
   ipAddress String?
@@ -63,6 +66,38 @@ model Session {
   @@index([userId])
   @@index([token])
   @@map("sessions")
+}
+
+// Better Auth required tables
+model Account {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope             String?
+  idToken           String?
+  password          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
 }
 
 enum UserRole {

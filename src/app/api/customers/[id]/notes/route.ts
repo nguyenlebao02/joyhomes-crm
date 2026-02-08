@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { z } from "zod";
+import { verifyCustomerAccess } from "@/services/customer-service";
 
 const noteSchema = z.object({
   content: z.string().min(1, "Nội dung không được trống"),
@@ -19,6 +20,13 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const notes = await db.customerNote.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "desc" },
@@ -43,6 +51,13 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const validated = noteSchema.safeParse(body);
 

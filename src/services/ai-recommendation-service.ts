@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import type { PropertyType } from "@/generated/prisma";
 import { Prisma } from "@/generated/prisma";
 
 // Customer engagement score weights
@@ -192,7 +193,7 @@ export async function getPropertyRecommendations(
 
   // Filter by preferred property types if any
   if (analysis.preferredPropertyTypes.length > 0) {
-    where.propertyType = { in: analysis.preferredPropertyTypes as any };
+    where.propertyType = { in: analysis.preferredPropertyTypes as PropertyType[] };
   }
 
   // Filter by budget range if available
@@ -435,8 +436,6 @@ export async function getCustomersNeedingAttention(
       contacts: { orderBy: { createdAt: "desc" }, take: 1 },
     },
   });
-
-  const thresholdDate = new Date(Date.now() - daysThreshold * 24 * 60 * 60 * 1000);
 
   const needAttention = customers
     .map((c) => {

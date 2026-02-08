@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { customerContactSchema } from "@/lib/validators/customer-validation-schema";
+import { verifyCustomerAccess } from "@/services/customer-service";
 
 // GET /api/customers/[id]/contacts - Get customer contacts
 export async function GET(
@@ -15,6 +16,13 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const contacts = await db.customerContact.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "desc" },
@@ -39,6 +47,13 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const validated = customerContactSchema.safeParse({ ...body, customerId: id });
 
@@ -47,8 +62,8 @@ export async function POST(
     }
 
     // Update customer status if NEW
-    const customer = await db.customer.findUnique({ where: { id } });
-    if (customer?.status === "NEW") {
+    const fullCustomer = await db.customer.findUnique({ where: { id } });
+    if (fullCustomer?.status === "NEW") {
       await db.customer.update({
         where: { id },
         data: { status: "CONTACTED" },

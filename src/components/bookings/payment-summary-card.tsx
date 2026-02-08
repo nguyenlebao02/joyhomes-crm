@@ -27,6 +27,7 @@ export function PaymentSummaryCard({
   agreedPrice,
   totalPaid,
   deposits,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   payments,
   refunds,
   commissionAmount,

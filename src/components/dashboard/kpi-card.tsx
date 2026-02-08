@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -24,17 +25,15 @@ export function KpiCard({
   iconColor = "text-muted-foreground",
   valueColor,
 }: KpiCardProps) {
-  const getTrendIcon = () => {
+  const TrendIcon = useMemo(() => {
     if (trend === undefined || trend === 0) return Minus;
     return trend > 0 ? TrendingUp : TrendingDown;
-  };
+  }, [trend]);
 
   const getTrendColor = () => {
     if (trend === undefined || trend === 0) return "text-muted-foreground";
     return trend > 0 ? "text-green-600" : "text-red-600";
   };
-
-  const TrendIcon = getTrendIcon();
 
   return (
     <Card>

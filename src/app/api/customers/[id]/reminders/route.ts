@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 import { reminderSchema } from "@/lib/validators/customer-validation-schema";
+import { verifyCustomerAccess } from "@/services/customer-service";
 
 // GET /api/customers/[id]/reminders - Get customer reminders
 export async function GET(
@@ -15,6 +16,13 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const reminders = await db.reminder.findMany({
       where: { customerId: id },
       orderBy: { remindAt: "asc" },
@@ -39,6 +47,13 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const validated = reminderSchema.safeParse({ ...body, customerId: id });
 
@@ -73,11 +88,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
+    // Verify user has access to this customer
+    const customer = await verifyCustomerAccess(id, session.user.id, session.user.role as string);
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { reminderId } = body;
 
     if (!reminderId) {
       return NextResponse.json({ error: "Reminder ID required" }, { status: 400 });
+    }
+
+    // Verify reminder belongs to this customer (prevents IDOR)
+    const existing = await db.reminder.findFirst({
+      where: { id: reminderId, customerId: id },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Reminder not found" }, { status: 404 });
     }
 
     const reminder = await db.reminder.update({

@@ -9,6 +9,7 @@ import {
 } from "date-fns";
 
 // Dashboard overview stats with trends
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getDashboardStats(dateRange?: { start: Date; end: Date }) {
   const now = new Date();
   const currentMonthStart = startOfMonth(now);

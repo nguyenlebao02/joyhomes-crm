@@ -3,9 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Edit, MapPin, Building2, Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { ArrowLeft, Edit, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

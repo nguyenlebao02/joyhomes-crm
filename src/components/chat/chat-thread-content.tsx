@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { ArrowLeft, Send, Home, Paperclip, Image, Share2, X, Check, CheckCheck } from "lucide-react";
+import { ArrowLeft, Send, Home, Paperclip, Image as ImageIcon, Share2, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -309,10 +309,11 @@ export function ChatThreadContent({ currentUserId }: { currentUserId: string }) 
                       ) : msg.type === "IMAGE" && msg.attachments?.length ? (
                         <div className="space-y-2">
                           {msg.attachments.map((url, i) => (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               key={i}
                               src={url}
-                              alt="Attached"
+                              alt="Attached image"
                               className="max-w-full rounded-md"
                             />
                           ))}
@@ -371,7 +372,7 @@ export function ChatThreadContent({ currentUserId }: { currentUserId: string }) 
         <div className="flex items-center gap-2">
           <FileUploadButton
             accept="image/*"
-            icon={<Image className="h-4 w-4" />}
+            icon={<ImageIcon className="h-4 w-4" />}
             onUpload={handleImageUpload}
           />
           <FileUploadButton

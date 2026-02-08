@@ -74,6 +74,18 @@ export async function getCustomers(params: CustomerSearchParams & { userId: stri
 }
 
 /**
+ * Verify user has access to a customer (ownership check for SALES role).
+ * Returns the customer if accessible, null otherwise.
+ */
+export async function verifyCustomerAccess(customerId: string, userId: string, role: string) {
+  const where: Prisma.CustomerWhereInput = { id: customerId, deletedAt: null };
+  if (role === "SALES") {
+    where.userId = userId;
+  }
+  return db.customer.findFirst({ where, select: { id: true } });
+}
+
+/**
  * Get single customer by ID
  */
 export async function getCustomerById(id: string, userId: string, role: string) {

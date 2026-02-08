@@ -6,9 +6,8 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
-import { Plus, Search, CheckSquare, Clock, AlertCircle } from "lucide-react";
+import { Plus, CheckSquare, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -39,13 +38,6 @@ async function fetchTasks(status?: string) {
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
 }
-
-const statusLabels: Record<string, string> = {
-  TODO: "Cần làm",
-  IN_PROGRESS: "Đang làm",
-  COMPLETED: "Hoàn thành",
-  CANCELLED: "Đã hủy",
-};
 
 const priorityColors: Record<string, string> = {
   LOW: "text-gray-500",
