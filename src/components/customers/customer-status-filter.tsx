@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 
 const statusOptions = [
-  { value: "", label: "Tất cả trạng thái" },
+  { value: "all", label: "Tất cả trạng thái" },
   { value: "NEW", label: "Mới" },
   { value: "CONTACTED", label: "Đã liên hệ" },
   { value: "QUALIFIED", label: "Đủ điều kiện" },
@@ -21,7 +21,7 @@ const statusOptions = [
 ];
 
 const sourceOptions = [
-  { value: "", label: "Tất cả nguồn" },
+  { value: "all", label: "Tất cả nguồn" },
   { value: "FACEBOOK", label: "Facebook" },
   { value: "GOOGLE", label: "Google" },
   { value: "ZALO", label: "Zalo" },
@@ -39,7 +39,7 @@ export function CustomerStatusFilter() {
 
   const handleStatusChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) {
+    if (value && value !== "all") {
       params.set("status", value);
     } else {
       params.delete("status");
@@ -50,7 +50,7 @@ export function CustomerStatusFilter() {
 
   const handleSourceChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value) {
+    if (value && value !== "all") {
       params.set("source", value);
     } else {
       params.delete("source");
@@ -62,7 +62,7 @@ export function CustomerStatusFilter() {
   return (
     <div className="flex gap-2">
       <Select
-        value={searchParams.get("status") || ""}
+        value={searchParams.get("status") || "all"}
         onValueChange={handleStatusChange}
       >
         <SelectTrigger className="w-[180px]">
@@ -78,7 +78,7 @@ export function CustomerStatusFilter() {
       </Select>
 
       <Select
-        value={searchParams.get("source") || ""}
+        value={searchParams.get("source") || "all"}
         onValueChange={handleSourceChange}
       >
         <SelectTrigger className="w-[180px]">
