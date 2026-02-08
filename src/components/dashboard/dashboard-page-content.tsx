@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -108,14 +108,7 @@ function getGreeting(): string {
 
 export function DashboardPageContent() {
   const [dateRange, setDateRange] = useState("30");
-  const [greeting, setGreeting] = useState("");
-  const [todayStr, setTodayStr] = useState("");
   const { user } = useCurrentUser();
-
-  useEffect(() => {
-    setGreeting(getGreeting());
-    setTodayStr(format(new Date(), "EEEE, dd/MM/yyyy", { locale: vi }));
-  }, []);
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -169,11 +162,11 @@ export function DashboardPageContent() {
       {/* Greeting header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {greeting ? `${greeting}, ${displayName}` : `Xin chào, ${displayName}`}
+          <h1 className="text-2xl font-bold tracking-tight" suppressHydrationWarning>
+            {getGreeting()}, {displayName}
           </h1>
-          <p className="text-muted-foreground">
-            Tổng quan hoạt động kinh doanh{todayStr ? ` — ${todayStr}` : ""}
+          <p className="text-muted-foreground" suppressHydrationWarning>
+            Tổng quan hoạt động kinh doanh — {format(new Date(), "EEEE, dd/MM/yyyy", { locale: vi })}
           </p>
         </div>
         <div className="flex items-center gap-2">
