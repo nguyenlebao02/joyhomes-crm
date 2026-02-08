@@ -14,10 +14,14 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  AlertCircle,
+  Flame,
+  ClipboardList,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -31,6 +35,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { KpiCard } from "./kpi-card";
 import { SalesPerformanceChart } from "./sales-performance-chart";
 import { BookingStatusChart } from "./booking-status-chart";
@@ -71,31 +76,39 @@ async function fetchDashboardStats() {
 }
 
 function formatPrice(price: number): string {
-  if (price >= 1000000000) return `${(price / 1000000000).toFixed(1)} ty`;
-  if (price >= 1000000) return `${(price / 1000000).toFixed(0)} trieu`;
+  if (price >= 1000000000) return `${(price / 1000000000).toFixed(1)} tỷ`;
+  if (price >= 1000000) return `${(price / 1000000).toFixed(0)} triệu`;
   return price.toLocaleString("vi-VN");
 }
 
 const statusLabels: Record<string, string> = {
-  PENDING: "Cho duyet",
-  APPROVED: "Da duyet",
-  DEPOSITED: "Da coc",
-  CONTRACTED: "Da ky HD",
-  COMPLETED: "Hoan thanh",
-  CANCELLED: "Da huy",
+  PENDING: "Chờ duyệt",
+  APPROVED: "Đã duyệt",
+  DEPOSITED: "Đã cọc",
+  CONTRACTED: "Đã ký HĐ",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
 
-const statusColors: Record<string, string> = {
-  PENDING: "text-yellow-600",
-  APPROVED: "text-blue-600",
-  DEPOSITED: "text-purple-600",
-  CONTRACTED: "text-cyan-600",
-  COMPLETED: "text-green-600",
-  CANCELLED: "text-red-600",
+const statusBadgeVariants: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  APPROVED: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  DEPOSITED: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",
+  CONTRACTED: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400",
+  COMPLETED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
 };
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Chào buổi sáng";
+  if (hour < 18) return "Chào buổi chiều";
+  return "Chào buổi tối";
+}
 
 export function DashboardPageContent() {
   const [dateRange, setDateRange] = useState("30");
+  const { user } = useCurrentUser();
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -103,7 +116,6 @@ export function DashboardPageContent() {
   });
 
   const handleExportExcel = async () => {
-    // Export to Excel functionality
     const data = {
       stats,
       exportDate: new Date().toISOString(),
@@ -121,13 +133,12 @@ export function DashboardPageContent() {
   };
 
   const handleExportPDF = async () => {
-    // Export to PDF functionality - simplified version
     window.print();
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-1">
         <div className="flex justify-between items-center">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-10 w-32" />
@@ -144,23 +155,29 @@ export function DashboardPageContent() {
 
   if (!stats) return null;
 
+  const displayName = user?.fullName || user?.name || "bạn";
+
   return (
-    <div className="space-y-6">
-      {/* Header with filters */}
+    <div className="space-y-6 p-1">
+      {/* Greeting header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Tong quan hoat dong kinh doanh</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {getGreeting()}, {displayName}
+          </h1>
+          <p className="text-muted-foreground">
+            Tổng quan hoạt động kinh doanh — {format(new Date(), "EEEE, dd/MM/yyyy", { locale: vi })}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Chon thoi gian" />
+              <SelectValue placeholder="Chọn thời gian" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">7 ngay</SelectItem>
-              <SelectItem value="30">30 ngay</SelectItem>
-              <SelectItem value="90">90 ngay</SelectItem>
+              <SelectItem value="7">7 ngày</SelectItem>
+              <SelectItem value="30">30 ngày</SelectItem>
+              <SelectItem value="90">90 ngày</SelectItem>
             </SelectContent>
           </Select>
           <DropdownMenu>
@@ -172,11 +189,11 @@ export function DashboardPageContent() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportExcel}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Xuat Excel
+                Xuất Excel
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportPDF}>
                 <FileText className="h-4 w-4 mr-2" />
-                Xuat PDF
+                Xuất PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -186,40 +203,91 @@ export function DashboardPageContent() {
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Khach hang"
+          title="Khách hàng"
           value={stats.totalCustomers}
           icon={Users}
           trend={stats.customerTrend}
-          trendLabel="so voi thang truoc"
-          subtitle={`+${stats.currentMonthCustomers} thang nay`}
+          trendLabel="so với tháng trước"
+          subtitle={`+${stats.currentMonthCustomers} tháng này`}
+          accentColor="border-l-primary"
+          iconColor="text-primary"
         />
         <KpiCard
-          title="Booking dang xu ly"
+          title="Booking đang xử lý"
           value={stats.activeBookings}
           icon={ShoppingCart}
           trend={stats.bookingTrend}
-          trendLabel="so voi thang truoc"
-          subtitle={`${stats.pendingBookings} cho duyet`}
+          trendLabel="so với tháng trước"
+          subtitle={`${stats.pendingBookings} chờ duyệt`}
+          accentColor="border-l-amber-500"
+          iconColor="text-amber-600 dark:text-amber-400"
         />
         <KpiCard
           title="Doanh thu"
           value={formatPrice(Number(stats.totalRevenue))}
           icon={DollarSign}
           trend={stats.revenueTrend}
-          trendLabel="so voi thang truoc"
-          valueColor="text-green-600"
-          subtitle={`${stats.completedBookings} giao dich`}
+          trendLabel="so với tháng trước"
+          subtitle={`${stats.completedBookings} giao dịch`}
+          accentColor="border-l-emerald-500"
+          iconColor="text-emerald-600 dark:text-emerald-400"
+          valueColor="text-emerald-600 dark:text-emerald-400"
         />
         <KpiCard
-          title="Ty le chuyen doi"
+          title="Tỷ lệ chuyển đổi"
           value={`${stats.conversionRate}%`}
           icon={TrendingUp}
-          subtitle="Booking thanh cong / Tong KH"
-          valueColor="text-blue-600"
+          subtitle="Booking thành công / Tổng KH"
+          accentColor="border-l-violet-500"
+          iconColor="text-violet-600 dark:text-violet-400"
+          valueColor="text-violet-600 dark:text-violet-400"
         />
       </div>
 
-      {/* Charts Row 1 */}
+      {/* Action required row */}
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card className="bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Booking chờ duyệt</p>
+              <p className="text-xl font-bold text-amber-700 dark:text-amber-400">
+                {stats.pendingBookings}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900/50">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/40">
+              <Flame className="h-4 w-4 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">KH mới tháng này</p>
+              <p className="text-xl font-bold text-red-700 dark:text-red-400">
+                {stats.currentMonthCustomers}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/50">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40">
+              <ClipboardList className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Booking tháng này</p>
+              <p className="text-xl font-bold text-blue-700 dark:text-blue-400">
+                {stats.currentMonthBookings}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row 1: Sales + Leaderboard (2:1) */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <SalesPerformanceChart days={parseInt(dateRange)} />
@@ -227,7 +295,7 @@ export function DashboardPageContent() {
         <TopPerformersLeaderboard />
       </div>
 
-      {/* Charts Row 2 */}
+      {/* Charts Row 2: Booking status + Customer source (1:1) */}
       <div className="grid gap-4 md:grid-cols-2">
         <BookingStatusChart />
         <CustomerSourceChart />
@@ -237,51 +305,57 @@ export function DashboardPageContent() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Booking gan day
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            Booking gần đây
           </CardTitle>
         </CardHeader>
         <CardContent>
           {stats.recentBookings.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              Chua co booking nao
+              Chưa có booking nào
             </p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {stats.recentBookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="flex items-center justify-between border-b pb-3 last:border-0"
+                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/30"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <Link
                       href={`/bookings/${booking.id}`}
-                      className="font-medium text-blue-600 hover:underline"
+                      className="font-medium text-primary hover:underline"
                     >
                       {booking.code}
                     </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {booking.customer.fullName} - {booking.property.code}
+                    <p className="text-sm text-muted-foreground truncate">
+                      {booking.customer.fullName} — {booking.property.code}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{formatPrice(Number(booking.agreedPrice))}</p>
-                    <p className="text-xs">
-                      <span className={statusColors[booking.status]}>
-                        {statusLabels[booking.status]}
-                      </span>
-                      {" - "}
-                      {format(new Date(booking.createdAt), "dd/MM/yyyy", { locale: vi })}
-                    </p>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Badge
+                      variant="secondary"
+                      className={`text-xs ${statusBadgeVariants[booking.status] || ""}`}
+                    >
+                      {statusLabels[booking.status] || booking.status}
+                    </Badge>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {formatPrice(Number(booking.agreedPrice))}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(booking.createdAt), "dd/MM/yyyy", { locale: vi })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
           <Link href="/bookings" className="block text-center mt-4">
-            <span className="text-sm text-blue-600 hover:underline">
-              Xem tat ca booking
-            </span>
+            <Button variant="ghost" size="sm" className="text-primary">
+              Xem tất cả booking
+            </Button>
           </Link>
         </CardContent>
       </Card>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -11,29 +11,47 @@ interface BookingStatusData {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "#f59e0b",
-  APPROVED: "#3b82f6",
-  DEPOSITED: "#8b5cf6",
-  CONTRACTED: "#06b6d4",
-  COMPLETED: "#22c55e",
-  CANCELLED: "#ef4444",
-  REFUNDED: "#6b7280",
+  PENDING: "#F59E0B",
+  APPROVED: "#1B84FF",
+  DEPOSITED: "#8B5CF6",
+  CONTRACTED: "#06B6D4",
+  COMPLETED: "#10B981",
+  CANCELLED: "#EF4444",
+  REFUNDED: "#6B7280",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: "Cho duyet",
-  APPROVED: "Da duyet",
-  DEPOSITED: "Da coc",
-  CONTRACTED: "Da ky HD",
-  COMPLETED: "Hoan thanh",
-  CANCELLED: "Da huy",
-  REFUNDED: "Hoan tien",
+  PENDING: "Chờ duyệt",
+  APPROVED: "Đã duyệt",
+  DEPOSITED: "Đã cọc",
+  CONTRACTED: "Đã ký HĐ",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+  REFUNDED: "Hoàn tiền",
 };
 
 async function fetchBookingStatus() {
   const res = await fetch("/api/reports?type=booking-status");
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const data = payload[0];
+  return (
+    <div className="rounded-xl border bg-card p-3 shadow-lg">
+      <div className="flex items-center gap-2 text-sm">
+        <span
+          className="h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: data.payload.fill }}
+        />
+        <span className="font-medium">{data.name}</span>
+        <span className="text-muted-foreground">({data.value})</span>
+      </div>
+    </div>
+  );
 }
 
 export function BookingStatusChart() {
@@ -49,7 +67,7 @@ export function BookingStatusChart() {
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[250px]" />
+          <Skeleton className="h-[280px]" />
         </CardContent>
       </Card>
     );
@@ -61,42 +79,61 @@ export function BookingStatusChart() {
     status: item.status,
   }));
 
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Phan bo trang thai Booking</CardTitle>
+        <CardTitle>Phân bổ trạng thái Booking</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[250px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={STATUS_COLORS[entry.status] || "#6b7280"}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => [value ?? 0, "So luong"]}
-                contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="flex items-center gap-4">
+          {/* Donut chart with center stat */}
+          <div className="relative h-[200px] w-[200px] shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={STATUS_COLORS[entry.status] || "#6B7280"}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            {/* Center label */}
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold">{total}</span>
+              <span className="text-xs text-muted-foreground">Tổng cộng</span>
+            </div>
+          </div>
+
+          {/* Vertical legend */}
+          <div className="flex flex-1 flex-col gap-2">
+            {chartData.map((entry) => (
+              <div key={entry.status} className="flex items-center gap-2">
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: STATUS_COLORS[entry.status] || "#6B7280" }}
+                />
+                <span className="flex-1 truncate text-sm text-muted-foreground">
+                  {entry.name}
+                </span>
+                <span className="text-sm font-medium">{entry.value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

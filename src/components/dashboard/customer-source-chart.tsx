@@ -22,19 +22,32 @@ const SOURCE_LABELS: Record<string, string> = {
   FACEBOOK: "Facebook",
   GOOGLE: "Google",
   ZALO: "Zalo",
-  REFERRAL: "Gioi thieu",
-  WALK_IN: "Truc tiep",
-  EVENT: "Su kien",
+  REFERRAL: "Giới thiệu",
+  WALK_IN: "Trực tiếp",
+  EVENT: "Sự kiện",
   HOTLINE: "Hotline",
   WEBSITE: "Website",
-  OTHER: "Khac",
-  UNKNOWN: "Chua xac dinh",
+  OTHER: "Khác",
+  UNKNOWN: "Chưa xác định",
 };
 
 async function fetchCustomerSource() {
   const res = await fetch("/api/reports?type=customer-source");
   if (!res.ok) throw new Error("Failed to fetch");
   return res.json();
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border bg-card p-3 shadow-lg">
+      <p className="mb-1 text-sm font-medium">{label}</p>
+      <p className="text-xs text-muted-foreground">
+        Số lượng: <span className="font-medium text-foreground">{payload[0].value}</span>
+      </p>
+    </div>
+  );
 }
 
 export function CustomerSourceChart() {
@@ -50,7 +63,7 @@ export function CustomerSourceChart() {
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[250px]" />
+          <Skeleton className="h-[280px]" />
         </CardContent>
       </Card>
     );
@@ -66,28 +79,48 @@ export function CustomerSourceChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Nguon khach hang</CardTitle>
+        <CardTitle>Nguồn khách hàng</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[250px]">
+        <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis type="number" />
-              <YAxis dataKey="name" type="category" width={80} className="text-xs" />
-              <Tooltip
-                formatter={(value) => [value ?? 0, "So luong"]}
-                contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#1B84FF" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#1B84FF" stopOpacity={1} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--color-border)"
+                horizontal={false}
               />
-              <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                dataKey="name"
+                type="category"
+                width={80}
+                tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                dataKey="value"
+                fill="url(#barGradient)"
+                radius={[0, 6, 6, 0]}
+                barSize={20}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

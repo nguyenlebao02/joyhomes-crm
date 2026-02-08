@@ -26,21 +26,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(stats);
     }
 
-    const params = propertySearchSchema.safeParse({
-      page: searchParams.get("page"),
-      limit: searchParams.get("limit"),
-      projectId: searchParams.get("projectId"),
-      status: searchParams.get("status"),
-      propertyType: searchParams.get("propertyType"),
-      building: searchParams.get("building"),
-      direction: searchParams.get("direction"),
-      minPrice: searchParams.get("minPrice"),
-      maxPrice: searchParams.get("maxPrice"),
-      minArea: searchParams.get("minArea"),
-      maxArea: searchParams.get("maxArea"),
-      bedrooms: searchParams.get("bedrooms"),
-      search: searchParams.get("search"),
-    });
+    // Filter out null values so Zod defaults/optionals work correctly
+    const raw: Record<string, string> = {};
+    for (const [key, value] of searchParams.entries()) {
+      raw[key] = value;
+    }
+    const params = propertySearchSchema.safeParse(raw);
 
     if (!params.success) {
       return NextResponse.json({ error: params.error.issues }, { status: 400 });
