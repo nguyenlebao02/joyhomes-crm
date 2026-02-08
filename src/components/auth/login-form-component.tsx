@@ -59,7 +59,7 @@ export function LoginFormComponent() {
           <Building2 className="h-8 w-8 text-primary" />
         </div>
         <div>
-          <CardTitle className="text-2xl font-bold">Joyhomes CRM</CardTitle>
+          <CardTitle className="text-2xl font-bold" style={{ fontFamily: "var(--font-cinzel)" }}>Joyhomes CRM</CardTitle>
           <CardDescription className="mt-2">
             Đăng nhập để tiếp tục sử dụng hệ thống
           </CardDescription>

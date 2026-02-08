@@ -91,8 +91,8 @@ export function CustomerSourceChart() {
             >
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#1B84FF" stopOpacity={0.85} />
-                  <stop offset="100%" stopColor="#1B84FF" stopOpacity={1} />
+                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.85} />
+                  <stop offset="100%" stopColor="#0F766E" stopOpacity={1} />
                 </linearGradient>
               </defs>
               <CartesianGrid

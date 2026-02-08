@@ -12,9 +12,9 @@ interface BookingStatusData {
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "#F59E0B",
-  APPROVED: "#1B84FF",
+  APPROVED: "#0F766E",
   DEPOSITED: "#8B5CF6",
-  CONTRACTED: "#06B6D4",
+  CONTRACTED: "#14B8A6",
   COMPLETED: "#10B981",
   CANCELLED: "#EF4444",
   REFUNDED: "#6B7280",

@@ -96,12 +96,12 @@ export function SalesPerformanceChart({ days = 30 }: SalesPerformanceChartProps)
             >
               <defs>
                 <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1B84FF" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#1B84FF" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0F766E" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#0F766E" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradCommission" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#14B8A6" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#14B8A6" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -133,24 +133,24 @@ export function SalesPerformanceChart({ days = 30 }: SalesPerformanceChartProps)
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#1B84FF"
+                stroke="#0F766E"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#gradRevenue)"
                 name="revenue"
                 dot={false}
-                activeDot={{ r: 5, fill: "#1B84FF", stroke: "#fff", strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: "#0F766E", stroke: "#fff", strokeWidth: 2 }}
               />
               <Area
                 type="monotone"
                 dataKey="commission"
-                stroke="#10B981"
+                stroke="#14B8A6"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#gradCommission)"
                 name="commission"
                 dot={false}
-                activeDot={{ r: 5, fill: "#10B981", stroke: "#fff", strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: "#14B8A6", stroke: "#fff", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

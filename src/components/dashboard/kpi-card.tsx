@@ -50,6 +50,7 @@ export function KpiCard({
     "border-l-primary": "bg-primary/10 text-primary",
     "border-l-amber-500": "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400",
     "border-l-violet-500": "bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400",
+    "border-l-sky-600": "bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400",
   };
   const iconBg = iconBgMap[accentColor] || "bg-primary/10 text-primary";
 

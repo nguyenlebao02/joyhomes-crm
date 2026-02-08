@@ -238,9 +238,9 @@ export function DashboardPageContent() {
           value={`${stats.conversionRate}%`}
           icon={TrendingUp}
           subtitle="Booking thành công / Tổng KH"
-          accentColor="border-l-violet-500"
-          iconColor="text-violet-600 dark:text-violet-400"
-          valueColor="text-violet-600 dark:text-violet-400"
+          accentColor="border-l-sky-600"
+          iconColor="text-sky-600 dark:text-sky-400"
+          valueColor="text-sky-600 dark:text-sky-400"
         />
       </div>
 
