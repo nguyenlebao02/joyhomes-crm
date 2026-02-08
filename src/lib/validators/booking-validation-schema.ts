@@ -18,6 +18,9 @@ export const TransactionType = z.enum([
   "REFUND",       // Hoàn tiền
 ]);
 
+// Payment method enum
+export const PaymentMethod = z.enum(["CASH", "BANK_TRANSFER", "CARD", "OTHER"]);
+
 // Create booking schema
 export const bookingCreateSchema = z.object({
   propertyId: z.string().min(1, "Vui lòng chọn sản phẩm"),
@@ -54,7 +57,7 @@ export const bookingCancelSchema = z.object({
 export const addDepositSchema = z.object({
   action: z.literal("add_deposit"),
   amount: z.number().positive("Số tiền phải lớn hơn 0"),
-  paymentMethod: z.string().optional(),
+  paymentMethod: PaymentMethod.optional(),
   notes: z.string().optional(),
 });
 
@@ -62,7 +65,15 @@ export const addDepositSchema = z.object({
 export const addPaymentSchema = z.object({
   action: z.literal("add_payment"),
   amount: z.number().positive("Số tiền phải lớn hơn 0"),
-  paymentMethod: z.string().optional(),
+  paymentMethod: PaymentMethod.optional(),
+  notes: z.string().optional(),
+});
+
+// Add refund schema
+export const addRefundSchema = z.object({
+  action: z.literal("add_refund"),
+  amount: z.number().positive("Số tiền phải lớn hơn 0"),
+  paymentMethod: PaymentMethod.optional(),
   notes: z.string().optional(),
 });
 
@@ -71,7 +82,7 @@ export const transactionCreateSchema = z.object({
   bookingId: z.string().min(1),
   type: TransactionType,
   amount: z.number().positive("Số tiền phải lớn hơn 0"),
-  paymentMethod: z.string().optional(),
+  paymentMethod: PaymentMethod.optional(),
   notes: z.string().optional(),
 });
 

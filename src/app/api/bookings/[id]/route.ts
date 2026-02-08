@@ -10,7 +10,7 @@ import {
   getBookingPaymentSummary,
   getNextValidStatuses,
 } from "@/services/booking-service";
-import { bookingUpdateSchema } from "@/lib/validators/booking-validation-schema";
+import { bookingUpdateSchema, addDepositSchema, addPaymentSchema, addRefundSchema } from "@/lib/validators/booking-validation-schema";
 import { UserRole, BookingStatus } from "@/generated/prisma";
 
 // GET /api/bookings/[id]
@@ -85,6 +85,18 @@ export async function PATCH(
       if (!canManageBookings && role !== "ACCOUNTANT") {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
+
+      // Validate transaction body with appropriate schema
+      const schemaMap = {
+        add_deposit: addDepositSchema,
+        add_payment: addPaymentSchema,
+        add_refund: addRefundSchema,
+      } as const;
+      const validated = schemaMap[body.action as keyof typeof schemaMap].safeParse(body);
+      if (!validated.success) {
+        return NextResponse.json({ error: validated.error.issues }, { status: 400 });
+      }
+
       const typeMap: Record<string, "DEPOSIT" | "PAYMENT" | "REFUND"> = {
         add_deposit: "DEPOSIT",
         add_payment: "PAYMENT",
@@ -93,9 +105,9 @@ export async function PATCH(
       const transaction = await addTransaction(
         id,
         typeMap[body.action],
-        body.amount,
-        body.paymentMethod,
-        body.notes,
+        validated.data.amount,
+        validated.data.paymentMethod,
+        validated.data.notes,
         session.user.id
       );
       return NextResponse.json(transaction);

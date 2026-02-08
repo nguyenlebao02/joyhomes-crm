@@ -1,5 +1,6 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketServer, Socket } from "socket.io";
+import { auth } from "@/lib/auth";
 
 // Socket event types
 export interface ServerToClientEvents {
@@ -53,10 +54,28 @@ export function initSocketServer(httpServer: HttpServer): SocketServer {
     },
   });
 
-  io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
-    const userId = socket.handshake.auth.userId as string;
-
-    if (!userId) {
+  io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
+    // Validate session via cookie instead of trusting client-supplied userId
+    let userId: string;
+    try {
+      const cookieHeader = socket.handshake.headers.cookie || "";
+      const sessionToken = cookieHeader
+        .split(";")
+        .map((c) => c.trim().split("="))
+        .find(([k]) => k === "better-auth.session_token")?.[1];
+      if (!sessionToken) {
+        socket.disconnect();
+        return;
+      }
+      const headers = new Headers();
+      headers.set("cookie", `better-auth.session_token=${sessionToken}`);
+      const session = await auth.api.getSession({ headers });
+      if (!session?.user?.id) {
+        socket.disconnect();
+        return;
+      }
+      userId = session.user.id;
+    } catch {
       socket.disconnect();
       return;
     }

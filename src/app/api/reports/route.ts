@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { hasPermission } from "@/lib/auth-permissions";
+import { UserRole } from "@/generated/prisma";
 import {
   getDashboardStats,
   getMonthlyRevenue,
@@ -17,6 +19,12 @@ export async function GET(request: NextRequest) {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check reports:read permission
+    const role = session.user.role as UserRole;
+    if (!hasPermission(role, "reports:read")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const searchParams = request.nextUrl.searchParams;
